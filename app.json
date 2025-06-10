@@ -1,0 +1,7 @@
+{
+	"name": "Miyan",
+	"description": "WhatsApp Bot Using Lib Baileys",
+	"repository": "https://github.com/carlotta0001/Miyan",
+	"logo": "https://node-js-sample.herokuapp.com/node.png",
+	"keywords": ["whatsapp-bot", "multi-device", "bot", "whatsapp"]
+}

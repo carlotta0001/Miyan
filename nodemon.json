@@ -1,0 +1,3 @@
+{
+  "ignore": ["miyan", "node_modules", "database", "logs"]
+}
