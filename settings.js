@@ -10,8 +10,8 @@ const chalk = require('chalk');
 //~~~~~~~~~~~~< GLOBAL SETTINGS >~~~~~~~~~~~~\\
 
 global.owner = ['6283842288835'] //['628','628'] 2 owner atau lebih
-global.packname = 'Bot WhatsApp'
-global.author = 'Miyandev'
+global.packname = ''
+global.author = ''
 global.botname = 'Miyan Bot'
 global.listprefix = ['/']
 global.listv = ['•','●','■','✿','▲','➩','➢','➣','➤','✦','✧','△','❀','○','□','♤','♡','◇','♧','々','〆']

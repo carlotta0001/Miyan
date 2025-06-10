@@ -40,8 +40,14 @@ server.listen(PORT, () => {
 const { GroupParticipantsUpdate, MessagesUpsert, Solving } = require('./src/message');
 const { isUrl, generateMessageTag, getBuffer, getSizeMedia, fetchJson, sleep } = require('./lib/function');
 
-async function startMiyanBot() {
-	const { state, saveCreds } = await useMultiFileAuthState('miyan');
+/*
+	* Create By Naze
+	* Follow https://github.com/nazedev
+	* Whatsapp : https://whatsapp.com/channel/0029VaWOkNm7DAWtkvkJBK43
+*/
+
+async function startNazeBot() {
+	const { state, saveCreds } = await useMultiFileAuthState('nazedev');
 	const { version, isLatest } = await fetchLatestBaileysVersion();
 	const level = pino({ level: 'silent' });
 	
@@ -100,11 +106,11 @@ async function startMiyanBot() {
 			return msg?.message || ''
 		}
 		return {
-			conversation: 'Halo Saya Miyan Bot'
+			conversation: 'Halo Saya Naze Bot'
 		}
 	}
 	
-	const miyan = WAConnection({
+	const naze = WAConnection({
 		logger: level,
 		getMessage,
 		syncFullHistory: true,
@@ -115,7 +121,12 @@ async function startMiyanBot() {
 		connectTimeoutMs: 60000,
 		browser: Browsers.ubuntu('Chrome'),
 		generateHighQualityLinkPreview: true,
+		//waWebSocketUrl: 'wss://web.whatsapp.com/ws',
 		cachedGroupMetadata: async (jid) => groupCache.get(jid),
+		shouldSyncHistoryMessage: msg => {
+			console.log(`\x1b[32mMemuat Chat [${msg.progress || 0}%]\x1b[39m`);
+			return !!msg.syncType;
+		},
 		transactionOpts: {
 			maxCommitRetries: 10,
 			delayBetweenTriesMs: 10,
@@ -130,7 +141,7 @@ async function startMiyanBot() {
 		},
 	})
 	
-	if (pairingCode && !phoneNumber && !miyan.authState.creds.registered) {
+	if (pairingCode && !phoneNumber && !naze.authState.creds.registered) {
 		async function getPhoneNumber() {
 			phoneNumber = global.number_bot ? global.number_bot : process.env.BOT_NUMBER || await question('Please type your WhatsApp number : ');
 			phoneNumber = phoneNumber.replace(/[^0-9]/g, '')
@@ -142,22 +153,23 @@ async function startMiyanBot() {
 		}
 		(async () => {
 			await getPhoneNumber();
+			await exec('rm -rf ./nazedev/*');
 			console.log('Phone number captured. Waiting for Connection...\n' + chalk.blueBright('Estimated time: around 2 ~ 5 minutes'))
 		})()
 	}
 	
-	await Solving(miyan, store)
+	await Solving(naze, store)
 	
-	miyan.ev.on('creds.update', saveCreds)
+	naze.ev.on('creds.update', saveCreds)
 	
-	miyan.ev.on('connection.update', async (update) => {
+	naze.ev.on('connection.update', async (update) => {
 		const { qr, connection, lastDisconnect, isNewLogin, receivedPendingNotifications } = update
-		if (!miyan.authState.creds.registered) console.log('Connection: ', connection || false);
-		if ((connection === 'connecting' || !!qr) && pairingCode && phoneNumber && !miyan.authState.creds.registered && !pairingStarted) {
+		if (!naze.authState.creds.registered) console.log('Connection: ', connection || false);
+		if ((connection === 'connecting' || !!qr) && pairingCode && phoneNumber && !naze.authState.creds.registered && !pairingStarted) {
 			setTimeout(async () => {
 				pairingStarted = true;
 				console.log('Requesting Pairing Code...')
-				let code = await miyan.requestPairingCode(phoneNumber);
+				let code = await naze.requestPairingCode(phoneNumber);
 				console.log(`Your Pairing Code : ${code}`);
 			}, 3000)
 		}
@@ -165,43 +177,43 @@ async function startMiyanBot() {
 			const reason = new Boom(lastDisconnect?.error)?.output.statusCode
 			if (reason === DisconnectReason.connectionLost) {
 				console.log('Connection to Server Lost, Attempting to Reconnect...');
-				startMiyanBot()
+				startNazeBot()
 			} else if (reason === DisconnectReason.connectionClosed) {
 				console.log('Connection closed, Attempting to Reconnect...');
-				startMiyanBot()
+				startNazeBot()
 			} else if (reason === DisconnectReason.restartRequired) {
 				console.log('Restart Required...');
-				startMiyanBot()
+				startNazeBot()
 			} else if (reason === DisconnectReason.timedOut) {
 				console.log('Connection Timed Out, Attempting to Reconnect...');
-				startMiyanBot()
+				startNazeBot()
 			} else if (reason === DisconnectReason.badSession) {
 				console.log('Delete Session and Scan again...');
-				startMiyanBot()
+				startNazeBot()
 			} else if (reason === DisconnectReason.connectionReplaced) {
 				console.log('Close current Session first...');
 			} else if (reason === DisconnectReason.loggedOut) {
 				console.log('Scan again and Run...');
-				exec('rm -rf ./miyan/*')
+				exec('rm -rf ./nazedev/*')
 				process.exit(1)
 			} else if (reason === DisconnectReason.forbidden) {
 				console.log('Connection Failure, Scan again and Run...');
-				exec('rm -rf ./miyan/*')
+				exec('rm -rf ./nazedev/*')
 				process.exit(1)
 			} else if (reason === DisconnectReason.multideviceMismatch) {
 				console.log('Scan again...');
-				exec('rm -rf ./miyan/*')
+				exec('rm -rf ./nazedev/*')
 				process.exit(0)
 			} else {
-				miyan.end(`Unknown DisconnectReason : ${reason}|${connection}`)
+				naze.end(`Unknown DisconnectReason : ${reason}|${connection}`)
 			}
 		}
 		if (connection == 'open') {
-			console.log('Connected to : ' + JSON.stringify(miyan.user, null, 2));
-			let botNumber = await miyan.decodeJid(miyan.user.id);
+			console.log('Connected to : ' + JSON.stringify(naze.user, null, 2));
+			let botNumber = await naze.decodeJid(naze.user.id);
 			if (global.db?.set[botNumber] && !global.db?.set[botNumber]?.join) {
 				if (my.ch.length > 0 && my.ch.includes('@newsletter')) {
-					if (my.ch) await miyan.newsletterMsg(my.ch, { type: 'follow' }).catch(e => {})
+					if (my.ch) await naze.newsletterMsg(my.ch, { type: 'follow' }).catch(e => {})
 					db.set[botNumber].join = true
 				}
 			}
@@ -216,39 +228,39 @@ async function startMiyanBot() {
 		if (isNewLogin) console.log(chalk.green('New device login detected...'))
 		if (receivedPendingNotifications == 'true') {
 			console.log('Please wait About 1 Minute...')
-			miyan.ev.flush()
+			naze.ev.flush()
 		}
 	});
 	
-	miyan.ev.on('contacts.update', (update) => {
+	naze.ev.on('contacts.update', (update) => {
 		for (let contact of update) {
-			let id = miyan.decodeJid(contact.id)
+			let id = naze.decodeJid(contact.id)
 			if (store && store.contacts) store.contacts[id] = { id, name: contact.notify }
 		}
 	});
 	
-	miyan.ev.on('call', async (call) => {
-		let botNumber = await miyan.decodeJid(miyan.user.id);
+	naze.ev.on('call', async (call) => {
+		let botNumber = await naze.decodeJid(naze.user.id);
 		if (global.db?.set[botNumber]?.anticall) {
 			for (let id of call) {
 				if (id.status === 'offer') {
-					let msg = await miyan.sendMessage(id.from, { text: `Saat Ini, Kami Tidak Dapat Menerima Panggilan ${id.isVideo ? 'Video' : 'Suara'}.\nJika @${id.from.split('@')[0]} Memerlukan Bantuan, Silakan Hubungi Owner :)`, mentions: [id.from]});
-					await miyan.sendContact(id.from, global.owner, msg);
-					await miyan.rejectCall(id.id, id.from)
+					let msg = await naze.sendMessage(id.from, { text: `Saat Ini, Kami Tidak Dapat Menerima Panggilan ${id.isVideo ? 'Video' : 'Suara'}.\nJika @${id.from.split('@')[0]} Memerlukan Bantuan, Silakan Hubungi Owner :)`, mentions: [id.from]});
+					await naze.sendContact(id.from, global.owner, msg);
+					await naze.rejectCall(id.id, id.from)
 				}
 			}
 		}
 	});
 	
-	miyan.ev.on('messages.upsert', async (message) => {
-		await MessagesUpsert(miyan, message, store, groupCache);
+	naze.ev.on('messages.upsert', async (message) => {
+		await MessagesUpsert(naze, message, store, groupCache);
 	});
 	
-	miyan.ev.on('group-participants.update', async (update) => {
-		await GroupParticipantsUpdate(miyan, update, store, groupCache);
+	naze.ev.on('group-participants.update', async (update) => {
+		await GroupParticipantsUpdate(naze, update, store, groupCache);
 	});
 	
-	miyan.ev.on('groups.update', (update) => {
+	naze.ev.on('groups.update', (update) => {
 		for (const n of update) {
 			if (store.groupMetadata[n.id]) {
 				groupCache.set(n.id, n);
@@ -257,20 +269,21 @@ async function startMiyanBot() {
 		}
 	});
 	
-	miyan.ev.on('presence.update', ({ id, presences: update }) => {
+	naze.ev.on('presence.update', ({ id, presences: update }) => {
 		store.presences[id] = store.presences?.[id] || {};
 		Object.assign(store.presences[id], update);
 	});
 	
 	setInterval(async () => {
-		if (miyan?.user?.id) await miyan.sendPresenceUpdate('available', miyan.decodeJid(miyan.user.id)).catch(e => {})
+		if (naze?.user?.id) await naze.sendPresenceUpdate('available', naze.decodeJid(naze.user.id)).catch(e => {})
 	}, 10 * 60 * 1000);
 
-	return miyan
+	return naze
 }
 
-startMiyanBot()
+startNazeBot()
 
+// Process Exit
 const cleanup = async (signal) => {
 	console.log(`Received ${signal}. Menyimpan database...`)
 	if (global.db) await database.write(global.db)

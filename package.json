@@ -5,7 +5,9 @@
   "main": "start.js",
   "type": "commonjs",
   "scripts": {
-    "start": "node start.js"
+    "start": "node start.js",
+    "dev": "nodemon index.js",
+    "debug": "DEBUG=* node start.js"
   },
   "keywords": [
     "whatsapp-bot",
@@ -13,7 +15,7 @@
     "bot-wa",
     "multi-device"
   ],
-  "author": "Miyan",
+  "author": "Nazedev",
   "license": "MIT",
   "directories": {
     "lib": "lib",
@@ -78,5 +80,13 @@
     "yargs": "^17.6.2",
     "ytdl-core": "npm:@distube/ytdl-core@latest",
     "yt-search": "^2.10.4"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nazedev/hitori.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nazedev/hitori/issues"
+  },
+  "homepage": "https://github.com/nazedev/hitori#readme"
 }
